@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
@@ -18,6 +19,9 @@ public class HorNumberPicker extends LinearLayout {
 	private int touchSlop = 50;
 	private int[] values;
 	private TextView textA, textB, textC, textD, textE;
+	
+	private final int ANIMATION_DURATION = 100;
+	private int childCount = 5;//default
 
 	/**
 	 * The currentPosition while the finger performs ACTION_DOWN
@@ -174,6 +178,13 @@ public class HorNumberPicker extends LinearLayout {
 		this.currentPosition = 0;
 		invalidateValues();
 	}
+	
+	public void setChildCount(int childCount){
+		if(childCount % 2 != 1)
+			throw new IllegalArgumentException("The child count must be odd");
+			
+		this.childCount = childCount;
+	}
 
 	/**
 	 * Get the current selected value
@@ -191,6 +202,7 @@ public class HorNumberPicker extends LinearLayout {
 	 *            the index of the value(no limit)
 	 * */
 	public void setCurrentPosition(int position) {
+		int oldPosition = currentPosition;
 		if (values == null || values.length == 0) {
 			this.currentPosition = 0;
 		} else {
@@ -202,6 +214,10 @@ public class HorNumberPicker extends LinearLayout {
 
 			this.currentPosition = position;
 		}
+		
+		if(oldPosition == currentPosition)
+			return;
+		
 		invalidateValues();
 	}
 
@@ -239,5 +255,8 @@ public class HorNumberPicker extends LinearLayout {
 			textD.setText("");
 			textE.setText("");
 		}
+	}
+	
+	private void playView(View fromView, View toView){
 	}
 }
