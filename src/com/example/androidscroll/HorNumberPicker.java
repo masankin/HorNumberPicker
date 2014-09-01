@@ -1,5 +1,8 @@
 package com.example.androidscroll;
 
+import com.nineoldandroids.animation.AnimatorSet;
+import com.nineoldandroids.animation.ObjectAnimator;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -22,6 +25,8 @@ public class HorNumberPicker extends LinearLayout {
 	
 	private final int ANIMATION_DURATION = 100;
 	private int childCount = 5;//default
+	
+	private enum Direction{LEFT, RIGHT, MIDDLE}
 
 	/**
 	 * The currentPosition while the finger performs ACTION_DOWN
@@ -176,7 +181,7 @@ public class HorNumberPicker extends LinearLayout {
 	public void setValues(int[] values) {
 		this.values = values;
 		this.currentPosition = 0;
-		invalidateValues();
+		invalidateValues(Direction.MIDDLE);
 	}
 	
 	public void setChildCount(int childCount){
@@ -218,14 +223,17 @@ public class HorNumberPicker extends LinearLayout {
 		if(oldPosition == currentPosition)
 			return;
 		
-		invalidateValues();
+		if(currentPosition > oldPosition)
+			invalidateValues(Direction.LEFT);
+		else
+			invalidateValues(Direction.RIGHT);
 	}
 
 	/**
 	 * When the values is changed or the currentPosition is changed, this method
 	 * should be called in order to invalidate the current value
 	 * */
-	private void invalidateValues() {
+	private void invalidateValues(Direction direction) {
 		if (values == null || values.length == 0 || textC == null) {
 			return;
 		}
@@ -257,6 +265,20 @@ public class HorNumberPicker extends LinearLayout {
 		}
 	}
 	
+	/**
+	 * Play the animation while TextView content changes.
+	 * */
 	private void playView(View fromView, View toView){
+		AnimatorSet set = new AnimatorSet();
+		ObjectAnimator animTranslate = ObjectAnimator
+				.ofFloat(fromView, "x", fromView.getX(), toView.getX()).setDuration(100);
+		ObjectAnimator animAlpha = ObjectAnimator
+				.ofFloat(fromView, "alpha", 1f, 0.1f).setDuration(100);
+		ObjectAnimator animScaleWidth = ObjectAnimator
+				.ofFloat(fromView, "width", 1f, (float)toView.getMeasuredWidth() / (float)fromView.getMeasuredWidth()).setDuration(100);
+		ObjectAnimator animScaleHeight = ObjectAnimator
+				.ofFloat(fromView, "height", 1f, (float)toView.getMeasuredWidth() / (float)fromView.getMeasuredWidth()).setDuration(100);
+		set.playTogether(animTranslate, animAlpha, animScaleWidth, animScaleHeight);
+		set.start();
 	}
 }
