@@ -1,5 +1,7 @@
 package com.example.androidscroll;
 
+import java.util.ArrayList;
+
 import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.animation.ObjectAnimator;
 
@@ -9,7 +11,12 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
@@ -26,8 +33,10 @@ public class HorNumberPicker extends LinearLayout {
 	private final int ANIMATION_DURATION = 100;
 	private int childCount = 5;//default
 	
-	private enum Direction{LEFT, RIGHT, MIDDLE}
-
+	private enum Direction{LEFT, RIGHT, NONE}
+	
+	ArrayList<View> viewList = new ArrayList<View>();
+	
 	/**
 	 * The currentPosition while the finger performs ACTION_DOWN
 	 * */
@@ -68,6 +77,11 @@ public class HorNumberPicker extends LinearLayout {
 		textC = (TextView) findViewById(R.id.textC);
 		textD = (TextView) findViewById(R.id.textD);
 		textE = (TextView) findViewById(R.id.textE);
+		viewList.add(textA);
+		viewList.add(textB);
+		viewList.add(textC);
+		viewList.add(textD);
+		viewList.add(textE);
 	}
 
 	@Override
@@ -133,12 +147,13 @@ public class HorNumberPicker extends LinearLayout {
 
 		int oldValue = this.getSelectedValue();
 
+		int newPosition = currentPosition;
 		if (add) {
-			currentPosition = originPosition + valueChange;
+			newPosition = originPosition + valueChange;
 		} else
-			currentPosition = originPosition - valueChange;
+			newPosition = originPosition - valueChange;
 
-		this.setCurrentPosition(currentPosition);
+		this.setCurrentPosition(newPosition);
 
 		if (this.getSelectedValue() != oldValue && valueChangeListener != null) {
 			valueChangeListener.valueChanged(oldValue, this.getSelectedValue());
@@ -181,7 +196,7 @@ public class HorNumberPicker extends LinearLayout {
 	public void setValues(int[] values) {
 		this.values = values;
 		this.currentPosition = 0;
-		invalidateValues(Direction.MIDDLE);
+		invalidateValues(Direction.NONE);
 	}
 	
 	public void setChildCount(int childCount){
@@ -237,6 +252,21 @@ public class HorNumberPicker extends LinearLayout {
 		if (values == null || values.length == 0 || textC == null) {
 			return;
 		}
+		
+//		switch(direction){
+//		case LEFT:
+//			for(int index = 0; index < viewList.size() - 2; index ++){
+//				this.playViewAnimation(viewList.get(index + 1), viewList.get(index));
+//			}
+//			break;
+//		case RIGHT:
+//			for(int index = 0; index < viewList.size() - 2; index ++){
+//				this.playViewAnimation(viewList.get(index), viewList.get(index + 1));
+//			}
+//			break;
+//		default:
+//			break;
+//		}
 
 		textC.setText(String.valueOf(values[currentPosition]));
 
@@ -268,17 +298,19 @@ public class HorNumberPicker extends LinearLayout {
 	/**
 	 * Play the animation while TextView content changes.
 	 * */
-	private void playView(View fromView, View toView){
-		AnimatorSet set = new AnimatorSet();
-		ObjectAnimator animTranslate = ObjectAnimator
-				.ofFloat(fromView, "x", fromView.getX(), toView.getX()).setDuration(100);
-		ObjectAnimator animAlpha = ObjectAnimator
-				.ofFloat(fromView, "alpha", 1f, 0.1f).setDuration(100);
-		ObjectAnimator animScaleWidth = ObjectAnimator
-				.ofFloat(fromView, "width", 1f, (float)toView.getMeasuredWidth() / (float)fromView.getMeasuredWidth()).setDuration(100);
-		ObjectAnimator animScaleHeight = ObjectAnimator
-				.ofFloat(fromView, "height", 1f, (float)toView.getMeasuredWidth() / (float)fromView.getMeasuredWidth()).setDuration(100);
-		set.playTogether(animTranslate, animAlpha, animScaleWidth, animScaleHeight);
+	private void playViewAnimation(View fromView, View toView){
+		float rate = (float)toView.getMeasuredWidth() / (float)fromView.getMeasuredWidth();
+		Animation translateAnimation = new TranslateAnimation(0, toView.getX() - fromView.getX(), 0, toView.getY() - fromView.getY());
+		Animation alphaAnimation = new AlphaAnimation(1.0f, 0.1f);
+		Animation scaleAnimation = new ScaleAnimation(1.0f, rate, 1.0f, rate,Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+		translateAnimation.setDuration(ANIMATION_DURATION);
+		alphaAnimation.setDuration(ANIMATION_DURATION);
+		scaleAnimation.setDuration(ANIMATION_DURATION);
+		AnimationSet set = new AnimationSet(true);
+		set.addAnimation(scaleAnimation);
+		set.addAnimation(translateAnimation);
+		set.addAnimation(alphaAnimation);
+		fromView.setAnimation(set);
 		set.start();
 	}
 }
